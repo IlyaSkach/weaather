@@ -3,13 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Погода в городах</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Прогноз погоды</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .weather-container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
+        .section { margin-top: 10px; padding: 10px; border-bottom: 1px solid #ddd; }
+        .forecast { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+        .forecast-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 5px; text-align: center; width: 120px; }
+    </style>
 </head>
 <body>
-    <h1>Текущая погода</h1>
-    <div id="weather">Загрузка погоды...</div>
 
-    <script src="script.js"></script>
+    <div class="weather-container">
+        <h1>Прогноз погоды</h1>
+
+        <label for="city">Выберите город:</label>
+        <select id="city">
+            <option value="Moscow,ru">Москва</option>
+            <option value="Saint Petersburg,ru">Санкт-Петербург</option>
+            <option value="Yekaterinburg,ru">Екатеринбург</option>
+            <option value="Novosibirsk,ru">Новосибирск</option>
+            <option value="Vladivostok,ru">Владивосток</option>
+        </select>
+
+        <div class="section">
+            <h2>Текущая температура</h2>
+            <p id="temperature"></p>
+            <p id="feels_like"></p>
+        </div>
+
+        <div class="section">
+            <h2>Общее описание</h2>
+            <p id="description"></p>
+            <p><img id="icon" src="" alt=""></p>
+        </div>
+
+        <div class="section">
+            <h2>Атмосферные условия</h2>
+            <p><b>Давление:</b> <span id="pressure"></span> hPa</p>
+            <p><b>Влажность:</b> <span id="humidity"></span>%</p>
+            <p><b>Облачность:</b> <span id="clouds"></span>%</p>
+            <p><b>Видимость:</b> <span id="visibility"></span> м</p>
+        </div>
+
+        <div class="section">
+            <h2>Ветер</h2>
+            <p><b>Скорость:</b> <span id="wind_speed"></span> м/с</p>
+            <p><b>Направление:</b> <span id="wind_direction"></span></p>
+            <p><b>Порывы ветра:</b> <span id="wind_gust"></span> м/с</p>
+        </div>
+
+        <div class="section">
+            <h2>Осадки</h2>
+            <p><b>Дождь:</b> <span id="rain"></span> мм</p>
+            <p><b>Снег:</b> <span id="snow"></span> мм</p>
+        </div>
+
+        <div class="section">
+            <h2>Солнце</h2>
+            <p><b>Восход:</b> <span id="sunrise"></span></p>
+            <p><b>Закат:</b> <span id="sunset"></span></p>
+        </div>
+
+        <h3>Прогноз на 5 дней (каждые 3 часа)</h3>
+        <div class="forecast" id="forecast"></div>
+    </div>
+
+    <script>
+        const API_KEY = "c2a4d3b120ba309a9bf7a6ba07f02ca4";
+        const citySelect = document.getElementById("city");
+
+        function getWindDirection(deg) {
+            const directions = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"];
+            return directions[Math.round(deg / 45) % 8] + ` (${deg}°)`;
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+        }
+
+        async function fetchWeather(city) {
+            const API_URL = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&lang=ru&appid=${API_KEY}`;
+
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                const data = await response.json();
+                const currentWeather = data.list[0];
+
+                document.getElementById("temperature").textContent = `🌡 ${Math.round(currentWeather.main.temp)}°C`;
+                document.getElementById("feels_like").textContent = `🤔 Ощущается как: ${Math.round(currentWeather.main.feels_like)}°C`;
+                document.getElementById("description").textContent = currentWeather.weather[0].description;
+                document.getElementById("icon").src = `https://openweathermap.org/img/wn/${currentWeather.weather[0].icon}.png`;
+
+                document.getElementById("pressure").textContent = currentWeather.main.pressure;
+                document.getElementById("humidity").textContent = currentWeather.main.humidity;
+                document.getElementById("clouds").textContent = currentWeather.clouds.all;
+                document.getElementById("visibility").textContent = currentWeather.visibility;
+
+                document.getElementById("wind_speed").textContent = currentWeather.wind.speed;
+                document.getElementById("wind_direction").textContent = getWindDirection(currentWeather.wind.deg);
+                document.getElementById("wind_gust").textContent = currentWeather.wind.gust ? currentWeather.wind.gust : "Нет данных";
+
+                document.getElementById("rain").textContent = currentWeather.rain ? currentWeather.rain["3h"] : "Нет данных";
+                document.getElementById("snow").textContent = currentWeather.snow ? currentWeather.snow["3h"] : "Нет данных";
+
+                document.getElementById("sunrise").textContent = formatTime(data.city.sunrise);
+                document.getElementById("sunset").textContent = formatTime(data.city.sunset);
+
+                const forecastContainer = document.getElementById("forecast");
+                forecastContainer.innerHTML = "";
+                data.list.forEach(item => {
+                    const date = new Date(item.dt * 1000);
+                    const formattedDate = date.toLocaleDateString('ru-RU', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+
+                    const forecastItem = document.createElement("div");
+                    forecastItem.classList.add("forecast-item");
+                    forecastItem.innerHTML = `
+                        <p><b>${formattedDate}</b></p>
+                        <p>${Math.round(item.main.temp)}°C</p>
+                        <p>💨 ${item.wind.speed} м/с (${getWindDirection(item.wind.deg)})</p>
+                        <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="">
+                    `;
+                    forecastContainer.appendChild(forecastItem);
+                });
+
+            } catch (error) {
+                console.error("Ошибка получения данных:", error);
+                alert(`Ошибка: ${error.message}`);
+            }
+        }
+
+        citySelect.addEventListener("change", function () {
+            fetchWeather(this.value);
+        });
+
+        fetchWeather(citySelect.value);
+    </script>
+
 </body>
 </html>
+
