@@ -11,6 +11,12 @@
 <body>
     <div class="weather-container">
         <h1>Прогноз погоды</h1>
+
+        <div class="search-container">
+            <input type="text" id="citySearch" placeholder="Поиск города..." autocomplete="off">
+            <div id="searchResults" class="search-results"></div>
+        </div>
+
         <div class="contact-section">
             <p class="contact-text">Для связи быстрей чем в KWORK напишите в Telegram</p>
             <a href="https://t.me/SkIlyaA" class="telegram-button" target="_blank">
@@ -20,51 +26,53 @@
             </a>
         </div>
 
-        <div class="city-select-container">
-            <label for="city">Выберите город</label>
-            <select id="city">
-                <option value="Moscow,ru">🏙 Москва</option>
-                <option value="Saint Petersburg,ru">🌉 Санкт-Петербург</option>
-                <option value="Yekaterinburg,ru">🏭 Екатеринбург</option>
-                <option value="Novosibirsk,ru">🏰 Новосибирск</option>
-                <option value="Vladivostok,ru">⚓ Владивосток</option>
-            </select>
+        <div class="cities-list" id="citiesList">
+            <div class="letter-section">
+                <h2>М</h2>
+                <div class="city-links">
+                    <a href="weather.html?city=Moscow">Москва</a>
+                    <a href="weather.html?city=Magnitogorsk">Магнитогорск</a>
+                    <a href="weather.html?city=Murmansk">Мурманск</a>
+                </div>
+            </div>
+
+            <div class="letter-section">
+                <h2>Н</h2>
+                <div class="city-links">
+                    <a href="weather.html?city=Novosibirsk">Новосибирск</a>
+                    <a href="weather.html?city=Nizhniy Novgorod">Нижний Новгород</a>
+                    <a href="weather.html?city=Novokuznetsk">Новокузнецк</a>
+                </div>
+            </div>
+
+            <div class="letter-section">
+                <h2>С</h2>
+                <div class="city-links">
+                    <a href="weather.html?city=Saint Petersburg">Санкт-Петербург</a>
+                    <a href="weather.html?city=Samara">Самара</a>
+                    <a href="weather.html?city=Sochi">Сочи</a>
+                </div>
+            </div>
+
+            <div class="letter-section">
+                <h2>Е</h2>
+                <div class="city-links">
+                    <a href="weather.html?city=Yekaterinburg">Екатеринбург</a>
+                </div>
+            </div>
+
+            <div class="letter-section">
+                <h2>В</h2>
+                <div class="city-links">
+                    <a href="weather.html?city=Vladivostok">Владивосток</a>
+                    <a href="weather.html?city=Volgograd">Волгоград</a>
+                    <a href="weather.html?city=Voronezh">Воронеж</a>
+                </div>
+            </div>
         </div>
-
-        <div class="weather-summary">
-            <h2 id="city-name"></h2>
-            <p id="weather-description-text"></p>
-        </div>
-
-        <div id="current-date" class="weather-header"></div>
-
-        <table class="weather-table">
-            <thead>
-                <tr>
-                    <th>Время</th>
-                    <th>t°C</th>
-                    <th>Погода</th>
-                    <th>Описание</th>
-                    <th>Давл</th>
-                    <th>Влж</th>
-                    <th>Ветер</th>
-                </tr>
-            </thead>
-            <tbody id="weather-data">
-                <!-- Данные будут добавлены через JavaScript -->
-            </tbody>
-        </table>
-
-        <div class="weather-header">Завтра</div>
-        <table class="weather-table">
-            <tbody id="tomorrow-weather">
-                <!-- Данные будут добавлены через JavaScript -->
-            </tbody>
-        </table>
-
     </div>
 
-    <script src="script.js"></script>
+    <script src="search.js"></script>
 </body>
 
 </html>

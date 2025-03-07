@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Прогноз погоды</title>
+	<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+	<div class="weather-container">
+		<div class="header-nav">
+			<a href="index.html" class="back-button">← К списку городов</a>
+			<h1>Прогноз погоды</h1>
+		</div>
+
+		<div class="weather-summary">
+			<h2 id="city-name"></h2>
+			<p id="weather-description-text"></p>
+			<!-- Здесь будет информация о погоде в аэропорту -->
+		</div>
+
+		<div id="current-date" class="weather-header"></div>
+
+		<table class="weather-table">
+			<thead>
+				<tr>
+					<th>Время суток</th>
+					<th>t°C</th>
+					<th>Погода</th>
+					<th>Описание</th>
+					<th>Давл</th>
+					<th>Влж</th>
+					<th>Ветер</th>
+				</tr>
+			</thead>
+			<tbody id="weather-data"></tbody>
+		</table>
+
+		<div class="weather-header">Завтра</div>
+		<table class="weather-table">
+			<tbody id="tomorrow-weather"></tbody>
+		</table>
+	</div>
+
+	<script src="weather.js"></script>
+</body>
+
+</html>
