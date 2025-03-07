@@ -24,6 +24,22 @@ async function fetchWeather(city) {
         const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&lang=ru&appid=${API_KEY}`);
         const data = await response.json();
         
+        const cityName = city.split(',')[0];
+        document.getElementById('city-name').textContent = `В ${cityName}`;
+        
+        const currentWeather = data.list[0];
+        const temp = Math.round(currentWeather.main.temp);
+        const feelsLike = Math.round(currentWeather.main.feels_like);
+        const description = currentWeather.weather[0].description;
+        const windSpeed = Math.round(currentWeather.wind.speed);
+        const windDir = getWindDirection(currentWeather.wind.deg);
+        
+        const weatherText = `Сейчас ${description}, температура воздуха ${temp}°C, ощущается как ${feelsLike}°C. 
+            Ветер ${windDir} ${windSpeed} м/с. Влажность воздуха ${currentWeather.main.humidity}%, 
+            атмосферное давление ${currentWeather.main.pressure} мм рт. ст.`;
+        
+        document.getElementById('weather-description-text').textContent = weatherText;
+        
         document.getElementById('current-date').textContent = formatDate(data.list[0].dt);
         
         const weatherData = document.getElementById('weather-data');
