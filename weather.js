@@ -396,16 +396,19 @@ function updateWeatherDisplay(forecasts, city) {
     const description = currentWeather.weather[0].description;
     const windSpeed = Math.round(currentWeather.wind.speed);
     const windDir = getWindDirection(currentWeather.wind.deg);
+    const iconUrl = getWeatherIcon(currentWeather.weather[0].id, currentWeather.hour);
 
-    const weatherText = `Сейчас ${description}, температура воздуха ${temp}°C, ощущается как ${feelsLike}°C. 
-            Ветер ${windDir} ${windSpeed} м/с. Влажность воздуха ${currentWeather.main.humidity}%, 
-            атмосферное давление ${currentWeather.main.pressure} мм рт. ст.`;
+    // Обновляем карточку текущей погоды
+    document.getElementById("current-weather-icon").src = iconUrl;
+    document.querySelector(".current-temp").textContent = `${temp}°C`;
+    document.querySelector(".current-desc").textContent = description;
+    document.querySelector(".current-feels-like").textContent = `Ощущается как ${feelsLike}°C`;
+    document.querySelector(".humidity-value").textContent = `${currentWeather.main.humidity}%`;
+    document.querySelector(".pressure-value").textContent = `${currentWeather.main.pressure} мм рт. ст.`;
+    document.querySelector(".wind-value").textContent = `${windDir}, ${windSpeed} м/с`;
 
-    document.getElementById("weather-description-text").textContent =
-      weatherText;
-    document.getElementById("current-date").textContent = formatDate(
-      currentWeather.dt
-    );
+    // Обновляем остальную информацию
+    document.getElementById("current-date").textContent = formatDate(currentWeather.dt);
   }
 
   // Обновление таблиц
