@@ -1,4 +1,5 @@
 const API_KEY = "c2a4d3b120ba309a9bf7a6ba07f02ca4";
+const YR_USER_AGENT = "WeatherApp/1.0 skachilya@gmail.com"; // Важно указать контакт для yr.no
 
 // Получаем параметр city из URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -40,6 +41,23 @@ const airportNames = {
   UWGG: "Нижний Новгород (Стригино)",
   UNWW: "Новокузнецк (Спиченково)",
   UUOO: "Воронеж",
+};
+
+// Координаты городов для yr.no
+const cityCoordinates = {
+  Moscow: { lat: 55.7558, lon: 37.6173 },
+  "Saint Petersburg": { lat: 59.9343, lon: 30.3351 },
+  Novosibirsk: { lat: 55.0084, lon: 82.9357 },
+  Yekaterinburg: { lat: 56.8389, lon: 60.6057 },
+  Vladivostok: { lat: 43.1198, lon: 131.8869 },
+  Sochi: { lat: 43.6028, lon: 39.7342 },
+  Murmansk: { lat: 68.9585, lon: 33.0827 },
+  Samara: { lat: 53.1959, lon: 50.1001 },
+  Volgograd: { lat: 48.708, lon: 44.5133 },
+  Magnitogorsk: { lat: 53.4186, lon: 58.9705 },
+  "Nizhniy Novgorod": { lat: 56.2965, lon: 43.9361 },
+  Novokuznetsk: { lat: 53.7557, lon: 87.1099 },
+  Voronezh: { lat: 51.672, lon: 39.1843 },
 };
 
 function getWindDirection(deg) {
@@ -110,20 +128,269 @@ async function fetchMetar(airportCode) {
 
 async function fetchWeather(city) {
   try {
-    // Добавляем код страны и язык
+    const coords = cityCoordinates[city];
+    if (!coords) throw new Error("Город не найден");
+
     const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/forecast?q=${city},RU&units=metric&lang=ru&appid=${API_KEY}`
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${coords.lat}&lon=${coords.lon}&units=metric&appid=${API_KEY}`
     );
+
     if (!response.ok) {
-      throw new Error(`Ошибка HTTP: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
     const data = await response.json();
+    console.log("Raw API response:", data); // Отладочная информация
 
-    // Используем название города из ответа API
-    const cityName = data.city.name;
-    document.getElementById("city-name").textContent = `В ${cityName}`;
+    const forecasts = {
+      today: [],
+      tomorrow: [],
+    };
 
-    const currentWeather = data.list[0];
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    data.list.forEach((item) => {
+      const date = new Date(item.dt * 1000);
+      const isToday = date.getDate() === today.getDate();
+      const isTomorrow = date.getDate() === tomorrow.getDate();
+
+      if (isToday || isTomorrow) {
+        const weatherData = {
+          dt: item.dt,
+          hour: date.getHours(),
+          main: {
+            temp: item.main.temp,
+            feels_like: item.main.feels_like,
+            pressure: Math.round(item.main.pressure * 0.750062),
+            humidity: item.main.humidity,
+          },
+          weather: [
+            {
+              id: item.weather[0].id, // Убедимся, что ID передается корректно
+              description: getWeatherDescription(item.weather[0].id),
+            },
+          ],
+          wind: {
+            speed: item.wind.speed,
+            deg: item.wind.deg,
+          },
+        };
+
+        console.log("Processed weather data:", weatherData); // Отладочная информация
+
+        if (isToday) {
+          forecasts.today.push(weatherData);
+        } else {
+          forecasts.tomorrow.push(weatherData);
+        }
+      }
+    });
+
+    // Обновляем интерфейс
+    updateWeatherDisplay(forecasts, city);
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+}
+
+function getWeatherDescription(weatherId) {
+  // Преобразуем коды OpenWeather в описания
+  const descriptions = {
+    200: "Гроза с небольшим дождем",
+    201: "Гроза с дождем",
+    202: "Гроза с сильным дождем",
+    210: "Легкая гроза",
+    211: "Гроза",
+    212: "Сильная гроза",
+    221: "Прерывистая гроза",
+    230: "Гроза с мелкой моросью",
+    231: "Гроза с моросью",
+    232: "Гроза с сильной моросью",
+    300: "Легкая морось",
+    301: "Морось",
+    302: "Сильная морось",
+    310: "Легкий моросящий дождь",
+    311: "Моросящий дождь",
+    312: "Сильный моросящий дождь",
+    313: "Ливень и морось",
+    314: "Сильный ливень и морось",
+    321: "Ливневый дождь",
+    500: "Небольшой дождь",
+    501: "Дождь",
+    502: "Сильный дождь",
+    503: "Очень сильный дождь",
+    504: "Экстремальный дождь",
+    511: "Ледяной дождь",
+    520: "Небольшой ливень",
+    521: "Ливень",
+    522: "Сильный ливень",
+    531: "Прерывистый ливень",
+    600: "Небольшой снег",
+    601: "Снег",
+    602: "Сильный снег",
+    611: "Мокрый снег",
+    612: "Небольшой мокрый снег",
+    613: "Ливень с мокрым снегом",
+    615: "Небольшой дождь со снегом",
+    616: "Дождь со снегом",
+    620: "Небольшой снегопад",
+    621: "Снегопад",
+    622: "Сильный снегопад",
+    701: "Туман",
+    711: "Дымка",
+    721: "Мгла",
+    731: "Песчаная буря",
+    741: "Туман",
+    751: "Песчаная буря",
+    761: "Пыльная буря",
+    762: "Вулканический пепел",
+    771: "Шквалы",
+    781: "Торнадо",
+    800: "Ясно",
+    801: "Небольшая облачность",
+    802: "Переменная облачность",
+    803: "Облачно с прояснениями",
+    804: "Пасмурно",
+  };
+  return descriptions[weatherId] || "Неизвестно";
+}
+
+function getWeatherIcon(weatherId, hour) {
+  const isDay = hour >= 6 && hour < 22;
+
+  // Преобразуем коды OpenWeather в названия иконок
+  const iconMap = {
+    200: isDay ? "thunderstorm" : "thunderstorm-night",
+    201: isDay ? "thunderstorm" : "thunderstorm-night",
+    202: "extreme-thunderstorm",
+    210: isDay ? "thunderstorm" : "thunderstorm-night",
+    211: isDay ? "thunderstorm" : "thunderstorm-night",
+    212: "extreme-thunderstorm",
+    221: isDay ? "thunderstorm" : "thunderstorm-night",
+    230: isDay ? "thunderstorm" : "thunderstorm-night",
+    231: isDay ? "thunderstorm" : "thunderstorm-night",
+    232: "extreme-thunderstorm",
+    300: "drizzle",
+    301: "drizzle",
+    302: "rain",
+    310: "rain",
+    311: "rain",
+    312: "extreme-rain",
+    313: "rain",
+    314: "extreme-rain",
+    321: "rain",
+    500: isDay ? "rain" : "rain-night",
+    501: isDay ? "rain" : "rain-night",
+    502: "extreme-rain",
+    503: "extreme-rain",
+    504: "extreme-rain",
+    511: "sleet",
+    520: isDay ? "rain" : "rain-night",
+    521: isDay ? "rain" : "rain-night",
+    522: "extreme-rain",
+    531: "rain",
+    600: isDay ? "snow" : "snow-night",
+    601: isDay ? "snow" : "snow-night",
+    602: "extreme-snow",
+    611: "sleet",
+    612: "sleet",
+    613: "sleet",
+    615: "sleet",
+    616: "sleet",
+    620: isDay ? "snow" : "snow-night",
+    621: isDay ? "snow" : "snow-night",
+    622: "extreme-snow",
+    701: "mist",
+    711: "fog",
+    721: "fog",
+    731: "wind",
+    741: "fog",
+    751: "wind",
+    761: "wind",
+    762: "fog",
+    771: "wind",
+    781: "extreme-thunderstorm",
+    800: isDay ? "clear-day" : "clear-night",
+    801: isDay ? "partly-cloudy-day" : "partly-cloudy-night",
+    802: isDay ? "partly-cloudy-day" : "partly-cloudy-night",
+    803: "cloudy",
+    804: "overcast",
+  };
+
+  const iconName = iconMap[weatherId] || (isDay ? "clear-day" : "clear-night");
+  const iconPath = `icons/${iconName}.svg`;
+
+  // Проверяем наличие файла (можно добавить для отладки)
+  console.log(`Loading icon: ${iconPath} for weather ID: ${weatherId}`);
+
+  return iconPath;
+}
+
+// Обновляем функцию создания строки таблицы
+function createRow(item) {
+  if (!item) return "";
+  const hour = String(item.hour).padStart(2, "0") + ":00";
+
+  // Добавляем отладочную информацию
+  console.log("Weather data:", {
+    hour: item.hour,
+    weatherId: item.weather[0].id,
+    description: item.weather[0].description,
+    isDay: item.hour >= 6 && item.hour < 22,
+  });
+
+  const iconUrl = getWeatherIcon(item.weather[0].id, item.hour);
+
+  return `
+        <tr>
+            <td>${hour}</td>
+            <td class="temperature">${Math.round(item.main.temp)}°</td>
+            <td class="weather-icon-cell">
+                <img src="${iconUrl}" 
+                     alt="${item.weather[0].description}" 
+                     class="weather-icon"
+                     onerror="this.src='icons/clear-day.svg'">
+            </td>
+            <td class="weather-description">${item.weather[0].description}</td>
+            <td class="pressure">${item.main.pressure}</td>
+            <td class="humidity">${item.main.humidity}%</td>
+            <td class="wind-info">
+                <span class="wind-direction">${getWindDirection(
+                  item.wind.deg
+                )}</span>, 
+                ${Math.round(item.wind.speed)} м/с
+            </td>
+        </tr>
+    `;
+}
+
+// Обновляем функцию обновления таблиц
+function updateWeatherTables(forecasts) {
+  const weatherData = document.getElementById("weather-data");
+  const tomorrowWeather = document.getElementById("tomorrow-weather");
+
+  weatherData.innerHTML = "";
+  tomorrowWeather.innerHTML = "";
+
+  // Заполняем таблицу для сегодня
+  forecasts.today.forEach((hourData) => {
+    weatherData.innerHTML += createRow(hourData);
+  });
+
+  // Заполняем таблицу для завтра
+  forecasts.tomorrow.forEach((hourData) => {
+    tomorrowWeather.innerHTML += createRow(hourData);
+  });
+}
+
+function updateWeatherDisplay(forecasts, city) {
+  document.getElementById("city-name").textContent = `В ${city}`;
+
+  const currentWeather = forecasts.today[0] || forecasts.today[1];
+  if (currentWeather) {
     const temp = Math.round(currentWeather.main.temp);
     const feelsLike = Math.round(currentWeather.main.feels_like);
     const description = currentWeather.weather[0].description;
@@ -137,96 +404,17 @@ async function fetchWeather(city) {
     document.getElementById("weather-description-text").textContent =
       weatherText;
     document.getElementById("current-date").textContent = formatDate(
-      data.list[0].dt
+      currentWeather.dt
     );
+  }
 
-    const weatherData = document.getElementById("weather-data");
-    const tomorrowWeather = document.getElementById("tomorrow-weather");
+  // Обновление таблиц
+  updateWeatherTables(forecasts);
 
-    weatherData.innerHTML = "";
-    tomorrowWeather.innerHTML = "";
-
-    const today = new Date().getDate();
-    const currentHour = new Date().getHours();
-
-    // Группируем прогнозы по дням и времени суток
-    const forecasts = {
-      today: { День: null, Вечер: null },
-      tomorrow: { Ночь: null, Утро: null, День: null, Вечер: null },
-    };
-
-    data.list.forEach((item) => {
-      const date = new Date(item.dt * 1000);
-      const hour = date.getHours();
-      const timeOfDay = getTimeOfDay(hour);
-
-      if (date.getDate() === today) {
-        // Для сегодня показываем только день и вечер
-        if (
-          (timeOfDay === "День" && !forecasts.today.День) ||
-          (timeOfDay === "Вечер" && !forecasts.today.Вечер)
-        ) {
-          forecasts.today[timeOfDay] = item;
-        }
-      } else if (date.getDate() === today + 1) {
-        // Для завтра показываем все времена суток
-        if (!forecasts.tomorrow[timeOfDay]) {
-          forecasts.tomorrow[timeOfDay] = item;
-        }
-      }
-    });
-
-    // Функция создания строки таблицы
-    function createRow(item, timeOfDay) {
-      if (!item) return "";
-      return `
-                <tr>
-                    <td>${timeOfDay}</td>
-                    <td class="temperature">${Math.round(item.main.temp)}°</td>
-                    <td><img src="https://openweathermap.org/img/wn/${
-                      item.weather[0].icon
-                    }@2x.png" class="weather-icon" alt="${
-        item.weather[0].description
-      }"></td>
-                    <td class="weather-description">${
-                      item.weather[0].description
-                    }</td>
-                    <td class="pressure">${item.main.pressure}</td>
-                    <td class="humidity">${item.main.humidity}%</td>
-                    <td class="wind-info">
-                        <span class="wind-direction">${getWindDirection(
-                          item.wind.deg
-                        )}</span>, 
-                        ${Math.round(item.wind.speed)} м/с
-                    </td>
-                </tr>
-            `;
-    }
-
-    // Заполняем таблицу для сегодня
-    ["День", "Вечер"].forEach((timeOfDay) => {
-      if (forecasts.today[timeOfDay]) {
-        weatherData.innerHTML += createRow(
-          forecasts.today[timeOfDay],
-          timeOfDay
-        );
-      }
-    });
-
-    // Заполняем таблицу для завтра
-    ["Ночь", "Утро", "День", "Вечер"].forEach((timeOfDay) => {
-      if (forecasts.tomorrow[timeOfDay]) {
-        tomorrowWeather.innerHTML += createRow(
-          forecasts.tomorrow[timeOfDay],
-          timeOfDay
-        );
-      }
-    });
-
-    // Добавляем информацию о погоде в аэропорту
-    const airportCode = airportCodes[city];
-    if (airportCode) {
-      const metarData = await fetchMetar(airportCode);
+  // Добавляем информацию о погоде в аэропорту
+  const airportCode = airportCodes[city];
+  if (airportCode) {
+    fetchMetar(airportCode).then((metarData) => {
       if (metarData) {
         const airportWeather = `
                     <div class="airport-weather">
@@ -242,21 +430,15 @@ async function fetchWeather(city) {
 
         const weatherSummary = document.querySelector(".weather-summary");
         if (weatherSummary) {
-          // Проверим, нет ли уже блока с погодой аэропорта
           const existingAirportWeather =
             weatherSummary.querySelector(".airport-weather");
           if (existingAirportWeather) {
             existingAirportWeather.remove();
           }
           weatherSummary.insertAdjacentHTML("beforeend", airportWeather);
-        } else {
-          console.error("Элемент .weather-summary не найден");
         }
       }
-    }
-  } catch (error) {
-    console.error("Ошибка получения данных:", error);
-    alert(`Ошибка: ${error.message}`);
+    });
   }
 }
 

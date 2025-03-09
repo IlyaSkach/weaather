@@ -147,7 +147,12 @@ select#city:focus {
   width: 40px;
   height: 40px;
   vertical-align: middle;
-  margin: 0 auto;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.1));
+}
+
+.weather-icon-cell {
+  text-align: center;
+  padding: 8px;
 }
 
 .temperature {
@@ -383,12 +388,9 @@ select#city:focus {
 }
 
 .weather-icon {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   vertical-align: middle;
-  display: block;
-  margin: 0 auto;
-  object-fit: contain;
 }
 
 .temperature {
@@ -685,4 +687,39 @@ select#city:focus {
   .airport-weather p {
     font-size: 0.85em;
   }
+}
+
+/* Добавляем стили для иконок погоды */
+@import url("https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css");
+
+.weather-icon-cell {
+  text-align: center;
+}
+
+.weather-icon-cell i {
+  color: #2196f3;
+}
+
+/* Стили для ночных иконок */
+[class*="night"] {
+  color: #1a237e;
+}
+
+/* Стили для разных типов погоды */
+.wi-rain,
+.wi-showers {
+  color: #1976d2;
+}
+
+.wi-thunderstorm {
+  color: #303f9f;
+}
+
+.wi-snow,
+.wi-sleet {
+  color: #78909c;
+}
+
+.wi-fog {
+  color: #90a4ae;
 }
